@@ -23,7 +23,7 @@ async function request(path, { method = 'GET', body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   })
 
-  if (res.status === 401) {
+  if (res.status === 401 && token) {
     setToken(null)
     if (!path.includes('/auth/login')) window.location.href = '/login'
   }
