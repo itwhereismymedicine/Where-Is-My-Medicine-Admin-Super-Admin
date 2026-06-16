@@ -121,14 +121,23 @@ export default function Approvals() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ margin: 0 }}>{preview.label}</h3>
-              <button className="sm" onClick={() => setPreview(null)}>Close ✕</button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <a
+                  href={preview.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 13, padding: '4px 12px',
+                    background: 'var(--primary)', color: '#fff',
+                    borderRadius: 6, textDecoration: 'none', whiteSpace: 'nowrap'
+                  }}
+                >
+                  Open ↗
+                </a>
+                <button className="sm" onClick={() => setPreview(null)}>Close ✕</button>
+              </div>
             </div>
-            {isPdf(preview.url)
-              ? <iframe src={preview.url} title={preview.label}
-                  style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8, background: '#fff' }} />
-              : <img src={preview.url} alt={preview.label}
-                  style={{ display: 'block', maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain', margin: '0 auto', borderRadius: 8 }} />
-            }
+            <PreviewContent url={preview.url} label={preview.label} />
           </div>
         </div>
       )}
@@ -138,6 +147,33 @@ export default function Approvals() {
 
 function isPdf(url) {
   return /\.pdf($|\?)/i.test(url || '')
+}
+
+/** Tries <img> first; on CORS/load error falls back to <iframe> which bypasses most cross-origin restrictions. */
+function PreviewContent({ url, label }) {
+  const [useFrame, setUseFrame] = useState(false)
+
+  // Reset fallback state whenever the document changes
+  useEffect(() => { setUseFrame(false) }, [url])
+
+  if (isPdf(url) || useFrame) {
+    return (
+      <iframe
+        src={url}
+        title={label}
+        style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8, background: '#fff' }}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={url}
+      alt={label}
+      style={{ display: 'block', maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain', margin: '0 auto', borderRadius: 8 }}
+      onError={() => setUseFrame(true)}
+    />
+  )
 }
 
 function DocLink({ label, url, onPreview }) {
@@ -154,12 +190,36 @@ function DocLink({ label, url, onPreview }) {
       onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
       onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
     >
-      <img
-        src={url} alt={label}
-        style={{ width: 114, height: 86, objectFit: 'cover', borderRadius: 7, background: '#111' }}
-        onError={(e) => { e.target.style.display = 'none' }}
-      />
+      <DocThumbnail url={url} label={label} />
       <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>{label} 🔍</span>
     </div>
+  )
+}
+
+/** Thumbnail: tries <img>, falls back to a document icon placeholder on error. */
+function DocThumbnail({ url, label }) {
+  const [broken, setBroken] = useState(false)
+
+  useEffect(() => { setBroken(false) }, [url])
+
+  if (broken) {
+    return (
+      <div style={{
+        width: 114, height: 86, borderRadius: 7, background: '#1a1a2e',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+      }}>
+        <span style={{ fontSize: 28 }}>📄</span>
+        <span style={{ fontSize: 10, color: '#888' }}>tap to view</span>
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={url}
+      alt={label}
+      style={{ width: 114, height: 86, objectFit: 'cover', borderRadius: 7, background: '#111' }}
+      onError={() => setBroken(true)}
+    />
   )
 }
