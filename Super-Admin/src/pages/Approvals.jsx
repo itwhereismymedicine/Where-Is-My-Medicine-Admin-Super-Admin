@@ -3,6 +3,20 @@ import { api } from '../api.js'
 import Modal from '../components/Modal.jsx'
 import { Loading, ErrorNote, fmtTime } from '../components/Helpers.jsx'
 
+// Cache fetched blobs so each document is only downloaded once per session
+const blobCache = new Map()
+
+function fetchCached(url) {
+  if (blobCache.has(url)) return Promise.resolve(blobCache.get(url))
+  return fetch(url)
+    .then((r) => { if (!r.ok) throw new Error('fetch failed'); return r.blob() })
+    .then((blob) => {
+      const objectUrl = URL.createObjectURL(blob)
+      blobCache.set(url, objectUrl)
+      return objectUrl
+    })
+}
+
 export default function Approvals() {
   const [rows, setRows] = useState(null)
   const [err, setErr] = useState('')
@@ -43,12 +57,8 @@ export default function Approvals() {
         <table>
           <thead>
             <tr>
-              <th>Pharmacy</th>
-              <th>Owner</th>
-              <th>City / State</th>
-              <th>Code</th>
-              <th>Submitted</th>
-              <th></th>
+              <th>Pharmacy</th><th>Owner</th><th>City / State</th>
+              <th>Code</th><th>Submitted</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -132,18 +142,7 @@ export default function Approvals() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ margin: 0 }}>{preview.label}</h3>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <a
-                  href={preview.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    fontSize: 13, padding: '5px 14px',
-                    background: 'var(--primary)', color: '#fff',
-                    borderRadius: 6, textDecoration: 'none', whiteSpace: 'nowrap'
-                  }}
-                >
-                  Open ↗
-                </a>
+                <OpenButton url={preview.url} />
                 <button className="sm" onClick={() => setPreview(null)}>Close ✕</button>
               </div>
             </div>
@@ -155,34 +154,56 @@ export default function Approvals() {
   )
 }
 
+/** Opens the cached blob URL in a new tab — instant since the file is already in memory. */
+function OpenButton({ url }) {
+  function handleOpen() {
+    const cached = blobCache.get(url)
+    if (cached) {
+      window.open(cached, '_blank', 'noopener,noreferrer')
+    } else {
+      // Not cached yet — fetch then open
+      fetchCached(url)
+        .then((blobUrl) => window.open(blobUrl, '_blank', 'noopener,noreferrer'))
+        .catch(() => window.open(url, '_blank', 'noopener,noreferrer'))
+    }
+  }
+  return (
+    <button
+      onClick={handleOpen}
+      style={{
+        fontSize: 13, padding: '5px 14px',
+        background: 'var(--primary)', color: '#fff',
+        border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap'
+      }}
+    >
+      Open ↗
+    </button>
+  )
+}
+
 function isPdf(url) {
   return /\.pdf($|\?)/i.test(url || '')
 }
 
 function PreviewContent({ url, label }) {
-  const [blobUrl, setBlobUrl] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [blobUrl, setBlobUrl] = useState(() => blobCache.get(url) || null)
+  const [loading, setLoading] = useState(!blobCache.has(url))
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
+    if (blobCache.has(url)) {
+      setBlobUrl(blobCache.get(url))
+      setLoading(false)
+      return
+    }
     setBlobUrl(null)
     setLoading(true)
     setFailed(false)
 
-    let objectUrl = null
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error('fetch failed')
-        return r.blob()
-      })
-      .then((blob) => {
-        objectUrl = URL.createObjectURL(blob)
-        setBlobUrl(objectUrl)
-      })
+    fetchCached(url)
+      .then((objectUrl) => setBlobUrl(objectUrl))
       .catch(() => setFailed(true))
       .finally(() => setLoading(false))
-
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
   }, [url])
 
   if (loading) {
@@ -204,17 +225,7 @@ function PreviewContent({ url, label }) {
       }}>
         <span style={{ fontSize: 48 }}>📄</span>
         <p style={{ color: 'var(--muted)', margin: 0 }}>Cannot display inline.</p>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            padding: '9px 22px', background: 'var(--primary)', color: '#fff',
-            borderRadius: 8, textDecoration: 'none', fontWeight: 600
-          }}
-        >
-          Open document ↗
-        </a>
+        <OpenButton url={url} />
       </div>
     )
   }
@@ -262,18 +273,13 @@ function DocLink({ label, url, onPreview }) {
 }
 
 function DocThumbnail({ url, label }) {
-  const [blobUrl, setBlobUrl] = useState(null)
+  const [blobUrl, setBlobUrl] = useState(() => blobCache.get(url) || null)
 
   useEffect(() => {
-    let objectUrl = null
-    fetch(url)
-      .then((r) => r.ok ? r.blob() : Promise.reject())
-      .then((blob) => {
-        objectUrl = URL.createObjectURL(blob)
-        setBlobUrl(objectUrl)
-      })
+    if (blobCache.has(url)) { setBlobUrl(blobCache.get(url)); return }
+    fetchCached(url)
+      .then((objectUrl) => setBlobUrl(objectUrl))
       .catch(() => {})
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
   }, [url])
 
   if (!blobUrl) {
