@@ -6,10 +6,11 @@ import { Loading, ErrorNote, fmtTime } from '../components/Helpers.jsx'
 export default function Approvals() {
   const [rows, setRows] = useState(null)
   const [err, setErr] = useState('')
-  const [active, setActive] = useState(null)   // pharmacy being reviewed
+  const [active, setActive] = useState(null)
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
+  const [preview, setPreview] = useState(null) // { label, url }
 
   const load = () => api.get('/api/pharmacies/pending').then(setRows).catch((e) => setErr(e.message))
   useEffect(() => { load() }, [])
@@ -72,9 +73,11 @@ export default function Approvals() {
 
           <h3 style={{ marginTop: 16 }}>Documents</h3>
           <div className="row" style={{ marginTop: 8 }}>
-            <DocLink label="Drug License" url={active.drugLicenseUri} />
-            {(active.aadharUris || []).map((u, i) => <DocLink key={i} label={`Aadhaar ${i + 1}`} url={u} />)}
-            <DocLink label="Shop Photo" url={active.photoUri} />
+            <DocLink label="Drug License" url={active.drugLicenseUri} onPreview={setPreview} />
+            {(active.aadharUris || []).map((u, i) => (
+              <DocLink key={i} label={`Aadhaar ${i + 1}`} url={u} onPreview={setPreview} />
+            ))}
+            <DocLink label="Shop Photo" url={active.photoUri} onPreview={setPreview} />
           </div>
 
           {!rejecting ? (
@@ -97,17 +100,66 @@ export default function Approvals() {
           )}
         </Modal>
       )}
+
+      {/* Inline document preview lightbox */}
+      {preview && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 100, padding: 20
+          }}
+          onClick={() => setPreview(null)}
+        >
+          <div
+            style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 14, padding: 20, width: '100%', maxWidth: 860,
+              maxHeight: '92vh', overflow: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0 }}>{preview.label}</h3>
+              <button className="sm" onClick={() => setPreview(null)}>Close ✕</button>
+            </div>
+            {isPdf(preview.url)
+              ? <iframe src={preview.url} title={preview.label}
+                  style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8, background: '#fff' }} />
+              : <img src={preview.url} alt={preview.label}
+                  style={{ display: 'block', maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain', margin: '0 auto', borderRadius: 8 }} />
+            }
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function DocLink({ label, url }) {
+function isPdf(url) {
+  return /\.pdf($|\?)/i.test(url || '')
+}
+
+function DocLink({ label, url, onPreview }) {
   if (!url) return <span className="badge grey">{label}: none</span>
   return (
-    <a href={url} target="_blank" rel="noreferrer" className="row" style={{ flexDirection: 'column', width: 120 }}>
-      <img className="thumb" style={{ width: 120, height: 80 }} src={url} alt={label}
-        onError={(e) => { e.target.style.display = 'none' }} />
-      <span>{label} ↗</span>
-    </a>
+    <div
+      onClick={() => onPreview({ label, url })}
+      style={{
+        cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: 6, width: 130, padding: 8,
+        background: 'var(--surface-2)', border: '1px solid var(--border)',
+        borderRadius: 10, transition: 'border-color .15s'
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+      onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+    >
+      <img
+        src={url} alt={label}
+        style={{ width: 114, height: 86, objectFit: 'cover', borderRadius: 7, background: '#111' }}
+        onError={(e) => { e.target.style.display = 'none' }}
+      />
+      <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>{label} 🔍</span>
+    </div>
   )
 }
