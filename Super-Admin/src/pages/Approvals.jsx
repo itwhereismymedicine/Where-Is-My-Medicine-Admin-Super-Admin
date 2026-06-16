@@ -3,7 +3,6 @@ import { api } from '../api.js'
 import Modal from '../components/Modal.jsx'
 import { Loading, ErrorNote, fmtTime } from '../components/Helpers.jsx'
 
-// Cache fetched blobs so each document is only downloaded once per session
 const blobCache = new Map()
 
 function fetchCached(url) {
@@ -15,6 +14,179 @@ function fetchCached(url) {
       blobCache.set(url, objectUrl)
       return objectUrl
     })
+}
+
+function isPdf(url) {
+  return /\.pdf($|\?)/i.test(url || '')
+}
+
+function renderInWindow(win, blobUrl, originalUrl) {
+  if (isPdf(originalUrl)) {
+    win.location.href = blobUrl
+  } else {
+    win.document.open()
+    win.document.write(`<!DOCTYPE html>
+<html><head><title>Document Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; display: flex; align-items: center;
+         justify-content: center; min-height: 100vh; }
+  img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+</style></head>
+<body><img src="${blobUrl}"></body></html>`)
+    win.document.close()
+  }
+}
+
+function OpenButton({ url }) {
+  function handleOpen() {
+    const win = window.open('', '_blank')
+    if (!win) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    const cached = blobCache.get(url)
+    if (cached) {
+      renderInWindow(win, cached, url)
+    } else {
+      win.document.write('<p style="font-family:sans-serif;padding:40px;color:#888">Loading…</p>')
+      fetchCached(url)
+        .then((blobUrl) => renderInWindow(win, blobUrl, url))
+        .catch(() => { win.location.href = url })
+    }
+  }
+
+  return (
+    <button
+      onClick={handleOpen}
+      style={{
+        fontSize: 13, padding: '5px 14px',
+        background: 'var(--primary)', color: '#fff',
+        border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap'
+      }}
+    >
+      Open ↗
+    </button>
+  )
+}
+
+function PreviewContent({ url, label }) {
+  const [blobUrl, setBlobUrl] = useState(() => blobCache.get(url) || null)
+  const [loading, setLoading] = useState(!blobCache.has(url))
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    if (blobCache.has(url)) {
+      setBlobUrl(blobCache.get(url))
+      setLoading(false)
+      return
+    }
+    setBlobUrl(null)
+    setLoading(true)
+    setFailed(false)
+
+    fetchCached(url)
+      .then((objectUrl) => setBlobUrl(objectUrl))
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false))
+  }, [url])
+
+  if (loading) {
+    return (
+      <div style={{
+        height: 320, display: 'flex', alignItems: 'center',
+        justifyContent: 'center', color: 'var(--muted)', fontSize: 15
+      }}>
+        Loading document…
+      </div>
+    )
+  }
+
+  if (failed || !blobUrl) {
+    return (
+      <div style={{
+        height: 220, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 14
+      }}>
+        <span style={{ fontSize: 48 }}>📄</span>
+        <p style={{ color: 'var(--muted)', margin: 0 }}>Cannot display inline.</p>
+        <OpenButton url={url} />
+      </div>
+    )
+  }
+
+  if (isPdf(url)) {
+    return (
+      <iframe
+        src={blobUrl}
+        title={label}
+        style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8 }}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={blobUrl}
+      alt={label}
+      style={{
+        display: 'block', maxWidth: '100%', maxHeight: '78vh',
+        objectFit: 'contain', margin: '0 auto', borderRadius: 8
+      }}
+    />
+  )
+}
+
+function DocThumbnail({ url, label }) {
+  const [blobUrl, setBlobUrl] = useState(() => blobCache.get(url) || null)
+
+  useEffect(() => {
+    if (blobCache.has(url)) { setBlobUrl(blobCache.get(url)); return }
+    fetchCached(url)
+      .then((objectUrl) => setBlobUrl(objectUrl))
+      .catch(() => {})
+  }, [url])
+
+  if (!blobUrl) {
+    return (
+      <div style={{
+        width: 114, height: 86, borderRadius: 7, background: '#1a1a2e',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', gap: 4
+      }}>
+        <span style={{ fontSize: 28 }}>📄</span>
+        <span style={{ fontSize: 10, color: '#666' }}>tap to view</span>
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={blobUrl}
+      alt={label}
+      style={{ width: 114, height: 86, objectFit: 'cover', borderRadius: 7, background: '#111' }}
+    />
+  )
+}
+
+function DocLink({ label, url, onPreview }) {
+  if (!url) return <span className="badge grey">{label}: none</span>
+  return (
+    <div
+      onClick={() => onPreview({ label, url })}
+      style={{
+        cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: 6, width: 130, padding: 8,
+        background: 'var(--surface-2)', border: '1px solid var(--border)',
+        borderRadius: 10, transition: 'border-color .15s'
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+      onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+    >
+      <DocThumbnail url={url} label={label} />
+      <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>{label} 🔍</span>
+    </div>
+  )
 }
 
 export default function Approvals() {
@@ -151,155 +323,5 @@ export default function Approvals() {
         </div>
       )}
     </div>
-  )
-}
-
-/** Opens the cached blob URL in a new tab — instant since the file is already in memory. */
-function OpenButton({ url }) {
-  function handleOpen() {
-    const cached = blobCache.get(url)
-    if (cached) {
-      window.open(cached, '_blank', 'noopener,noreferrer')
-    } else {
-      // Not cached yet — fetch then open
-      fetchCached(url)
-        .then((blobUrl) => window.open(blobUrl, '_blank', 'noopener,noreferrer'))
-        .catch(() => window.open(url, '_blank', 'noopener,noreferrer'))
-    }
-  }
-  return (
-    <button
-      onClick={handleOpen}
-      style={{
-        fontSize: 13, padding: '5px 14px',
-        background: 'var(--primary)', color: '#fff',
-        border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap'
-      }}
-    >
-      Open ↗
-    </button>
-  )
-}
-
-function isPdf(url) {
-  return /\.pdf($|\?)/i.test(url || '')
-}
-
-function PreviewContent({ url, label }) {
-  const [blobUrl, setBlobUrl] = useState(() => blobCache.get(url) || null)
-  const [loading, setLoading] = useState(!blobCache.has(url))
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    if (blobCache.has(url)) {
-      setBlobUrl(blobCache.get(url))
-      setLoading(false)
-      return
-    }
-    setBlobUrl(null)
-    setLoading(true)
-    setFailed(false)
-
-    fetchCached(url)
-      .then((objectUrl) => setBlobUrl(objectUrl))
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false))
-  }, [url])
-
-  if (loading) {
-    return (
-      <div style={{
-        height: 320, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', color: 'var(--muted)', fontSize: 15
-      }}>
-        Loading document…
-      </div>
-    )
-  }
-
-  if (failed || !blobUrl) {
-    return (
-      <div style={{
-        height: 220, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 14
-      }}>
-        <span style={{ fontSize: 48 }}>📄</span>
-        <p style={{ color: 'var(--muted)', margin: 0 }}>Cannot display inline.</p>
-        <OpenButton url={url} />
-      </div>
-    )
-  }
-
-  if (isPdf(url)) {
-    return (
-      <iframe
-        src={blobUrl}
-        title={label}
-        style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8 }}
-      />
-    )
-  }
-
-  return (
-    <img
-      src={blobUrl}
-      alt={label}
-      style={{
-        display: 'block', maxWidth: '100%', maxHeight: '78vh',
-        objectFit: 'contain', margin: '0 auto', borderRadius: 8
-      }}
-    />
-  )
-}
-
-function DocLink({ label, url, onPreview }) {
-  if (!url) return <span className="badge grey">{label}: none</span>
-  return (
-    <div
-      onClick={() => onPreview({ label, url })}
-      style={{
-        cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 6, width: 130, padding: 8,
-        background: 'var(--surface-2)', border: '1px solid var(--border)',
-        borderRadius: 10, transition: 'border-color .15s'
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-      onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
-    >
-      <DocThumbnail url={url} label={label} />
-      <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>{label} 🔍</span>
-    </div>
-  )
-}
-
-function DocThumbnail({ url, label }) {
-  const [blobUrl, setBlobUrl] = useState(() => blobCache.get(url) || null)
-
-  useEffect(() => {
-    if (blobCache.has(url)) { setBlobUrl(blobCache.get(url)); return }
-    fetchCached(url)
-      .then((objectUrl) => setBlobUrl(objectUrl))
-      .catch(() => {})
-  }, [url])
-
-  if (!blobUrl) {
-    return (
-      <div style={{
-        width: 114, height: 86, borderRadius: 7, background: '#1a1a2e',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', gap: 4
-      }}>
-        <span style={{ fontSize: 28 }}>📄</span>
-        <span style={{ fontSize: 10, color: '#666' }}>tap to view</span>
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={blobUrl}
-      alt={label}
-      style={{ width: 114, height: 86, objectFit: 'cover', borderRadius: 7, background: '#111' }}
-    />
   )
 }
