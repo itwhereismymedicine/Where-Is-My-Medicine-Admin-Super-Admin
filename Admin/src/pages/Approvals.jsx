@@ -43,12 +43,8 @@ export default function Approvals() {
         <table>
           <thead>
             <tr>
-              <th>Pharmacy</th>
-              <th>Owner</th>
-              <th>City / State</th>
-              <th>Code</th>
-              <th>Submitted</th>
-              <th></th>
+              <th>Pharmacy</th><th>Owner</th><th>City / State</th>
+              <th>Code</th><th>Submitted</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -147,7 +143,22 @@ export default function Approvals() {
                 <button className="sm" onClick={() => setPreview(null)}>Close ✕</button>
               </div>
             </div>
-            <PreviewContent url={preview.url} label={preview.label} />
+
+            {isPdf(preview.url)
+              ? <iframe
+                  src={preview.url}
+                  title={preview.label}
+                  style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8 }}
+                />
+              : <img
+                  src={preview.url}
+                  alt={preview.label}
+                  style={{
+                    display: 'block', maxWidth: '100%', maxHeight: '78vh',
+                    objectFit: 'contain', margin: '0 auto', borderRadius: 8
+                  }}
+                />
+            }
           </div>
         </div>
       )}
@@ -157,88 +168,6 @@ export default function Approvals() {
 
 function isPdf(url) {
   return /\.pdf($|\?)/i.test(url || '')
-}
-
-function PreviewContent({ url, label }) {
-  const [blobUrl, setBlobUrl] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    setBlobUrl(null)
-    setLoading(true)
-    setFailed(false)
-
-    let objectUrl = null
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error('fetch failed')
-        return r.blob()
-      })
-      .then((blob) => {
-        objectUrl = URL.createObjectURL(blob)
-        setBlobUrl(objectUrl)
-      })
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false))
-
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
-  }, [url])
-
-  if (loading) {
-    return (
-      <div style={{
-        height: 320, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', color: 'var(--muted)', fontSize: 15
-      }}>
-        Loading document…
-      </div>
-    )
-  }
-
-  if (failed || !blobUrl) {
-    return (
-      <div style={{
-        height: 220, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 14
-      }}>
-        <span style={{ fontSize: 48 }}>📄</span>
-        <p style={{ color: 'var(--muted)', margin: 0 }}>Cannot display inline.</p>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            padding: '9px 22px', background: 'var(--primary)', color: '#fff',
-            borderRadius: 8, textDecoration: 'none', fontWeight: 600
-          }}
-        >
-          Open document ↗
-        </a>
-      </div>
-    )
-  }
-
-  if (isPdf(url)) {
-    return (
-      <iframe
-        src={blobUrl}
-        title={label}
-        style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8 }}
-      />
-    )
-  }
-
-  return (
-    <img
-      src={blobUrl}
-      alt={label}
-      style={{
-        display: 'block', maxWidth: '100%', maxHeight: '78vh',
-        objectFit: 'contain', margin: '0 auto', borderRadius: 8
-      }}
-    />
-  )
 }
 
 function DocLink({ label, url, onPreview }) {
@@ -262,21 +191,11 @@ function DocLink({ label, url, onPreview }) {
 }
 
 function DocThumbnail({ url, label }) {
-  const [blobUrl, setBlobUrl] = useState(null)
+  const [broken, setBroken] = useState(false)
 
-  useEffect(() => {
-    let objectUrl = null
-    fetch(url)
-      .then((r) => r.ok ? r.blob() : Promise.reject())
-      .then((blob) => {
-        objectUrl = URL.createObjectURL(blob)
-        setBlobUrl(objectUrl)
-      })
-      .catch(() => {})
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
-  }, [url])
+  useEffect(() => { setBroken(false) }, [url])
 
-  if (!blobUrl) {
+  if (broken) {
     return (
       <div style={{
         width: 114, height: 86, borderRadius: 7, background: '#1a1a2e',
@@ -291,9 +210,10 @@ function DocThumbnail({ url, label }) {
 
   return (
     <img
-      src={blobUrl}
+      src={url}
       alt={label}
       style={{ width: 114, height: 86, objectFit: 'cover', borderRadius: 7, background: '#111' }}
+      onError={() => setBroken(true)}
     />
   )
 }
