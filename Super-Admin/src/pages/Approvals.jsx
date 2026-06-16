@@ -10,7 +10,7 @@ export default function Approvals() {
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
-  const [preview, setPreview] = useState(null) // { label, url }
+  const [preview, setPreview] = useState(null)
 
   const load = () => api.get('/api/pharmacies/pending').then(setRows).catch((e) => setErr(e.message))
   useEffect(() => { load() }, [])
@@ -42,7 +42,14 @@ export default function Approvals() {
       <div className="table-wrap" style={{ marginTop: 14 }}>
         <table>
           <thead>
-            <tr><th>Pharmacy</th><th>Owner</th><th>City / State</th><th>Code</th><th>Submitted</th><th></th></tr>
+            <tr>
+              <th>Pharmacy</th>
+              <th>Owner</th>
+              <th>City / State</th>
+              <th>Code</th>
+              <th>Submitted</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
             {rows.map((p) => (
@@ -72,7 +79,7 @@ export default function Approvals() {
           </div>
 
           <h3 style={{ marginTop: 16 }}>Documents</h3>
-          <div className="row" style={{ marginTop: 8 }}>
+          <div className="row" style={{ marginTop: 8, flexWrap: 'wrap', gap: 10 }}>
             <DocLink label="Drug License" url={active.drugLicenseUri} onPreview={setPreview} />
             {(active.aadharUris || []).map((u, i) => (
               <DocLink key={i} label={`Aadhaar ${i + 1}`} url={u} onPreview={setPreview} />
@@ -88,8 +95,12 @@ export default function Approvals() {
           ) : (
             <div style={{ marginTop: 16 }}>
               <label>Rejection reason (sent to pharmacy)</label>
-              <textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Drug license image is unreadable" />
+              <textarea
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g. Drug license image is unreadable"
+              />
               <div className="row" style={{ marginTop: 12 }}>
                 <button className="red" disabled={busy || !reason.trim()} onClick={() => reject(active.id)}>
                   Confirm reject
@@ -101,21 +112,20 @@ export default function Approvals() {
         </Modal>
       )}
 
-      {/* Inline document preview lightbox */}
       {preview && (
         <div
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100, padding: 20
+            zIndex: 200, padding: 20
           }}
           onClick={() => setPreview(null)}
         >
           <div
             style={{
               background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: 14, padding: 20, width: '100%', maxWidth: 860,
-              maxHeight: '92vh', overflow: 'auto'
+              borderRadius: 14, padding: 20, width: '100%', maxWidth: 900,
+              maxHeight: '94vh', overflow: 'auto'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -127,7 +137,7 @@ export default function Approvals() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    fontSize: 13, padding: '4px 12px',
+                    fontSize: 13, padding: '5px 14px',
                     background: 'var(--primary)', color: '#fff',
                     borderRadius: 6, textDecoration: 'none', whiteSpace: 'nowrap'
                   }}
@@ -149,29 +159,84 @@ function isPdf(url) {
   return /\.pdf($|\?)/i.test(url || '')
 }
 
-/** Tries <img> first; on CORS/load error falls back to <iframe> which bypasses most cross-origin restrictions. */
 function PreviewContent({ url, label }) {
-  const [useFrame, setUseFrame] = useState(false)
+  const [blobUrl, setBlobUrl] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
 
-  // Reset fallback state whenever the document changes
-  useEffect(() => { setUseFrame(false) }, [url])
+  useEffect(() => {
+    setBlobUrl(null)
+    setLoading(true)
+    setFailed(false)
 
-  if (isPdf(url) || useFrame) {
+    let objectUrl = null
+    fetch(url)
+      .then((r) => {
+        if (!r.ok) throw new Error('fetch failed')
+        return r.blob()
+      })
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setBlobUrl(objectUrl)
+      })
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false))
+
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [url])
+
+  if (loading) {
+    return (
+      <div style={{
+        height: 320, display: 'flex', alignItems: 'center',
+        justifyContent: 'center', color: 'var(--muted)', fontSize: 15
+      }}>
+        Loading document…
+      </div>
+    )
+  }
+
+  if (failed || !blobUrl) {
+    return (
+      <div style={{
+        height: 220, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 14
+      }}>
+        <span style={{ fontSize: 48 }}>📄</span>
+        <p style={{ color: 'var(--muted)', margin: 0 }}>Cannot display inline.</p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: '9px 22px', background: 'var(--primary)', color: '#fff',
+            borderRadius: 8, textDecoration: 'none', fontWeight: 600
+          }}
+        >
+          Open document ↗
+        </a>
+      </div>
+    )
+  }
+
+  if (isPdf(url)) {
     return (
       <iframe
-        src={url}
+        src={blobUrl}
         title={label}
-        style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8, background: '#fff' }}
+        style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8 }}
       />
     )
   }
 
   return (
     <img
-      src={url}
+      src={blobUrl}
       alt={label}
-      style={{ display: 'block', maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain', margin: '0 auto', borderRadius: 8 }}
-      onError={() => setUseFrame(true)}
+      style={{
+        display: 'block', maxWidth: '100%', maxHeight: '78vh',
+        objectFit: 'contain', margin: '0 auto', borderRadius: 8
+      }}
     />
   )
 }
@@ -196,30 +261,39 @@ function DocLink({ label, url, onPreview }) {
   )
 }
 
-/** Thumbnail: tries <img>, falls back to a document icon placeholder on error. */
 function DocThumbnail({ url, label }) {
-  const [broken, setBroken] = useState(false)
+  const [blobUrl, setBlobUrl] = useState(null)
 
-  useEffect(() => { setBroken(false) }, [url])
+  useEffect(() => {
+    let objectUrl = null
+    fetch(url)
+      .then((r) => r.ok ? r.blob() : Promise.reject())
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setBlobUrl(objectUrl)
+      })
+      .catch(() => {})
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [url])
 
-  if (broken) {
+  if (!blobUrl) {
     return (
       <div style={{
         width: 114, height: 86, borderRadius: 7, background: '#1a1a2e',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', gap: 4
       }}>
         <span style={{ fontSize: 28 }}>📄</span>
-        <span style={{ fontSize: 10, color: '#888' }}>tap to view</span>
+        <span style={{ fontSize: 10, color: '#666' }}>tap to view</span>
       </div>
     )
   }
 
   return (
     <img
-      src={url}
+      src={blobUrl}
       alt={label}
       style={{ width: 114, height: 86, objectFit: 'cover', borderRadius: 7, background: '#111' }}
-      onError={() => setBroken(true)}
     />
   )
 }
