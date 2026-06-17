@@ -138,6 +138,7 @@ store: dict[str, dict[str, dict]] = {
     "broadcasts": {},
     "refunds": {},
     "payouts": {},
+    "service_zones": {},
     "feature_flags": {
         "config": {
             "flags": {"doctorConsult": True, "aiAssistant": True, "homeDelivery": True},
