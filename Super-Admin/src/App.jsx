@@ -18,8 +18,7 @@ import Notifications from './pages/Notifications.jsx'
 import Admins from './pages/Admins.jsx'
 import Settings from './pages/Settings.jsx'
 import AuditLog from './pages/AuditLog.jsx'
-import Update from './pages/Update.jsx'
-import ServiceCoverage from './pages/ServiceCoverage.jsx'
+import Surveys from './pages/Surveys.jsx'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -47,8 +46,7 @@ export default function App() {
         <Route path="admins" element={<Admins />} />
         <Route path="settings" element={<Settings />} />
         <Route path="audit" element={<AuditLog />} />
-        <Route path="update" element={<Update />} />
-        <Route path="coverage" element={<ServiceCoverage />} />
+        <Route path="surveys" element={<Surveys />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
