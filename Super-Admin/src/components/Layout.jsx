@@ -21,6 +21,7 @@ const NAV = [
   { to: '/admins', label: 'Admin Accounts', cap: 'manage_admins' },
   { to: '/settings', label: 'Feature Flags', cap: 'feature_flags' },
   { to: '/update', label: 'App Update', cap: 'feature_flags' },
+  { to: '/coverage', label: 'Service Coverage', cap: 'feature_flags' },
   { to: '/audit', label: 'Audit Log', cap: 'view_own_audit' },
 ]
 
