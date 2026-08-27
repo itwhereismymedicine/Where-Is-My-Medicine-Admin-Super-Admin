@@ -23,6 +23,7 @@ export default function Settings() {
     try {
       await api.put('/api/config/flags', {
         flags: cfg.flags || {}, comingSoon: cfg.comingSoon || {}, forceUpdate: cfg.forceUpdate || {},
+        appDiscount: cfg.appDiscount || {},
       })
       setMsg('Saved. The app will pick these up on next config fetch.')
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
@@ -32,6 +33,7 @@ export default function Settings() {
   if (!cfg) return <div className="page"><Loading /></div>
 
   const fu = cfg.forceUpdate || {}
+  const ad = cfg.appDiscount || {}
 
   return (
     <div className="page">
@@ -40,6 +42,21 @@ export default function Settings() {
 
       <FlagGroup title="Feature flags" group="flags" cfg={cfg} toggle={toggle} addFlag={addFlag} />
       <FlagGroup title='"Coming soon" toggles' group="comingSoon" cfg={cfg} toggle={toggle} addFlag={addFlag} />
+
+      <div className="panel" style={{ maxWidth: 560 }}>
+        <h3>App discount</h3>
+        <p className="muted">
+          The platform's cut, carved out of each pharmacy's agreed discount. If a shop gives 20%
+          and this is 2%, the customer still sees 20% off — shown as "Shop 18% + App 2%". Super Admin only.
+        </p>
+        <label className="row" style={{ marginTop: 8 }}>
+          <input type="checkbox" style={{ width: 'auto' }} checked={!!ad.enabled}
+            onChange={(e) => setCfg({ ...cfg, appDiscount: { ...ad, enabled: e.target.checked } })} /> Enabled
+        </label>
+        <label>Platform extra %</label>
+        <input type="number" min="0" max="100" value={ad.platformExtraPct ?? 0}
+          onChange={(e) => setCfg({ ...cfg, appDiscount: { ...ad, platformExtraPct: Number(e.target.value) } })} />
+      </div>
 
       <div className="panel" style={{ maxWidth: 560 }}>
         <h3>Force update</h3>

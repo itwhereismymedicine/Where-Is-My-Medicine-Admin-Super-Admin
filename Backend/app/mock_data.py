@@ -96,6 +96,31 @@ store: dict[str, dict[str, dict]] = {
             "paymentStatus": "PENDING", "createdAtMillis": _now - 90 * 60 * 1000,
         },
     },
+    # ── reservations/{id} — in-store reserve → pharmacy redeem ────────────
+    "reservations": {
+        "resv_5001": {
+            "reservationId": "40771523", "redeemCode": "K7Q2-9WMB",
+            "customerUid": "uid_cust_1", "customerPhone": "9911111111",
+            "customerName": "Sourav Das",
+            "pharmacyUid": "uid_pharm_2", "pharmacyPhone": "9800000002",
+            "pharmacyName": "CityCare Pharmacy",
+            "medicineName": "Dolo 650", "quantity": 2, "unitPrice": 32,
+            "shopDiscountPct": 6, "platformExtraPct": 2,
+            "status": "REDEEMED", "finalBillAmount": 60,
+            "createdAtMillis": _now - 3 * _day, "redeemedAtMillis": _now - 3 * _day + 3_600_000,
+        },
+        "resv_5002": {
+            "reservationId": "88213094", "redeemCode": "M4X8-3PLC",
+            "customerUid": "uid_cust_2", "customerPhone": "9922222222",
+            "customerName": "Meera Iyer",
+            "pharmacyUid": "uid_pharm_2", "pharmacyPhone": "9800000002",
+            "pharmacyName": "CityCare Pharmacy",
+            "medicineName": "Azithral 500", "quantity": 1, "unitPrice": 118,
+            "shopDiscountPct": 6, "platformExtraPct": 2,
+            "status": "RESERVED", "finalBillAmount": 0,
+            "createdAtMillis": _now - 2 * 3_600_000, "redeemedAtMillis": 0,
+        },
+    },
     "chats": {
         # chat messages are nested in Firestore; for the mock we flatten one
         # thread keyed by orderId into a list under "messages".
@@ -150,6 +175,7 @@ store: dict[str, dict[str, dict]] = {
             "flags": {"doctorConsult": True, "aiAssistant": True, "homeDelivery": True},
             "comingSoon": {"labReports": True, "insurance": True},
             "forceUpdate": {"enabled": False, "minVersionCode": 1, "message": ""},
+            "appDiscount": {"platformExtraPct": 2, "enabled": True},
             "updatedAtMillis": _now - _day,
         }
     },

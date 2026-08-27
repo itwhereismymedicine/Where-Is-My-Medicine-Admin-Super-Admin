@@ -14,14 +14,16 @@ DOC = "config"
 @router.get("/flags")
 def get_flags(admin: CurrentAdmin = Depends(get_current_admin)):
     return store.collection(COL).get(DOC) or {
-        "flags": {}, "comingSoon": {}, "forceUpdate": {"enabled": False}}
+        "flags": {}, "comingSoon": {}, "forceUpdate": {"enabled": False},
+        "appDiscount": {"platformExtraPct": 0, "enabled": False}}
 
 
 @router.put("/flags")
 def set_flags(body: FeatureFlagsBody, admin: CurrentAdmin = Depends(require_superadmin)):
     rec = store.collection(COL).set(DOC, {
         "flags": body.flags, "comingSoon": body.comingSoon,
-        "forceUpdate": body.forceUpdate, "updatedAtMillis": store.now_ms(),
+        "forceUpdate": body.forceUpdate, "appDiscount": body.appDiscount,
+        "updatedAtMillis": store.now_ms(),
         "updatedBy": admin.email,
     })
     audit.log(admin, "config.flags.update", DOC)

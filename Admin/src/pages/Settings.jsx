@@ -32,6 +32,7 @@ export default function Settings() {
   if (!cfg) return <div className="page"><Loading /></div>
 
   const fu = cfg.forceUpdate || {}
+  const ad = cfg.appDiscount || {}
 
   return (
     <div className="page">
@@ -40,6 +41,18 @@ export default function Settings() {
 
       <FlagGroup title="Feature flags" group="flags" cfg={cfg} toggle={toggle} addFlag={addFlag} />
       <FlagGroup title='"Coming soon" toggles' group="comingSoon" cfg={cfg} toggle={toggle} addFlag={addFlag} />
+
+      <div className="panel" style={{ maxWidth: 560 }}>
+        <h3>App discount</h3>
+        <p className="muted">
+          The platform's discount cut carved out of each pharmacy's agreed discount.
+          View-only — only a Super Admin can change this.
+        </p>
+        <label>Status</label>
+        <input value={ad.enabled ? 'Enabled' : 'Disabled'} disabled />
+        <label>Platform extra %</label>
+        <input value={`${ad.platformExtraPct ?? 0}%`} disabled />
+      </div>
 
       <div className="panel" style={{ maxWidth: 560 }}>
         <h3>Force update</h3>

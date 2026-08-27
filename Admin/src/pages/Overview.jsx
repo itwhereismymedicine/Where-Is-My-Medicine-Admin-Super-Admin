@@ -28,6 +28,8 @@ export default function Overview() {
         <StatCard value={ov.totalOrders} label="Total orders" />
         <StatCard value={ov.openOrders} label="Open orders" />
         <StatCard value={fmtMoney(ov.gmv)} label="Paid GMV" />
+        <StatCard value={ov.totalReservations ?? 0} label="Reservations" />
+        <StatCard value={ov.verifiedAppCustomers ?? 0} label="Verified app customers" />
       </div>
       <div className="panel">
         <h3>Quick actions</h3>

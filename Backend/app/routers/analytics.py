@@ -16,7 +16,9 @@ def overview(admin: CurrentAdmin = Depends(require(Cap.VIEW_ANALYTICS))):
     accounts = store.collection("pharmacy_accounts").list()
     orders = store.collection("orders").list()
     customers = store.collection("customers").list()
+    reservations = store.collection("reservations").list()
     paid = [o for o in orders if o.get("paymentStatus") == "PAID"]
+    redeemed_reservations = [r for r in reservations if r.get("status") == "REDEEMED"]
     return {
         "pendingApprovals": sum(1 for a in accounts
                                 if a.get("verificationStatus", "pending") == "pending"),
@@ -28,6 +30,9 @@ def overview(admin: CurrentAdmin = Depends(require(Cap.VIEW_ANALYTICS))):
         "totalOrders": len(orders),
         "openOrders": sum(1 for o in orders if o.get("status") in ("PLACED", "CONFIRMED", "OUT_FOR_DELIVERY")),
         "gmv": sum(o.get("totalAmount", 0) for o in paid),
+        "totalReservations": len(reservations),
+        # Redeemed reservations = customers proven to have arrived via the app.
+        "verifiedAppCustomers": len(redeemed_reservations),
     }
 
 

@@ -90,3 +90,6 @@ class FeatureFlagsBody(BaseModel):
     flags: dict = {}
     comingSoon: dict = {}
     forceUpdate: dict = {}
+    # App discount cut carved out of the pharmacy's agreed discount, e.g.
+    # {"platformExtraPct": 2, "enabled": true}. Super-admin only (see config.py).
+    appDiscount: dict = {}
