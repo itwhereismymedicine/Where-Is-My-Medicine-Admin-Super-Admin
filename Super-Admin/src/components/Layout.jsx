@@ -22,6 +22,7 @@ const NAV = [
   { to: '/settings', label: 'Feature Flags', cap: 'feature_flags' },
   { to: '/update', label: 'App Update', cap: null },
   { to: '/poster', label: 'Poster', cap: null },
+  { to: '/gallery', label: 'Website Carousel', cap: null },
   { to: '/coverage', label: 'Service Coverage', cap: 'feature_flags' },
   { to: '/audit', label: 'Audit Log', cap: 'view_own_audit' },
 ]
