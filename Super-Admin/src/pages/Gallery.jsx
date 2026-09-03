@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
 import { Loading, ErrorNote, fmtTime } from '../components/Helpers.jsx'
 
-// Keep uploaded images small — they're stored as a data URI on the gallery
-// doc itself (no file storage wired up), so this is a friendly ceiling.
-const MAX_UPLOAD_BYTES = 700 * 1024
+// Max image upload size. Uploads are stored as a data URI on the gallery doc
+// itself (no separate file storage wired up), so this is the ceiling.
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024 // 2 MB
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -43,7 +43,7 @@ export default function Gallery() {
     setErr('')
     if (!file.type.startsWith('image/')) { setErr('Choose an image file.'); return }
     if (file.size > MAX_UPLOAD_BYTES) {
-      setErr(`That image is too big (${(file.size / 1024).toFixed(0)} KB) — use one under ${Math.floor(MAX_UPLOAD_BYTES / 1024)} KB, or paste an image URL instead.`)
+      setErr(`That image is too big (${(file.size / (1024 * 1024)).toFixed(1)} MB) — use one under ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB, or paste an image URL instead.`)
       return
     }
     try {
@@ -120,7 +120,7 @@ export default function Gallery() {
           placeholder="https://example.com/banner.jpg"
           disabled={isUpload}
         />
-        <p className="muted" style={{ margin: '6px 0' }}>— or upload an image —</p>
+        <p className="muted" style={{ margin: '6px 0' }}>— or upload an image (up to 2 MB) —</p>
         <input type="file" accept="image/*" ref={fileInput} onChange={handleFile} />
         {isUpload && (
           <p className="muted" style={{ marginTop: 4 }}>
