@@ -21,6 +21,7 @@ import AuditLog from './pages/AuditLog.jsx'
 import Surveys from './pages/Surveys.jsx'
 import Update from './pages/Update.jsx'
 import Poster from './pages/Poster.jsx'
+import Gallery from './pages/Gallery.jsx'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="surveys" element={<Surveys />} />
         <Route path="update" element={<Update />} />
         <Route path="poster" element={<Poster />} />
+        <Route path="gallery" element={<Gallery />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

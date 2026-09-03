@@ -160,6 +160,10 @@ store: dict[str, dict[str, dict]] = {
     "survey_inventory": {},
     # Used by routers/poster.py — the main-website promo poster.
     "posters": {},
+    # Used by routers/gallery.py — the main-website image carousel. Large
+    # uploads are split across gallery_chunks to dodge Firestore's 1 MB limit.
+    "gallery": {},
+    "gallery_chunks": {},
     "medicine_catalog": {
         "med_dolo650": {"name": "Dolo 650", "saltName": "Paracetamol 650mg",
                         "category": "Analgesic", "mrp": 32, "prescriptionRequired": False, "active": True},
