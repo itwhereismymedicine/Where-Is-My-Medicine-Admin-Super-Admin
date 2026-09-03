@@ -1,0 +1,11 @@
+# Node / Vite build output (Admin + Super-Admin frontends)
+node_modules/
+dist/
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
