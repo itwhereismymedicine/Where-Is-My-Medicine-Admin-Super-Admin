@@ -21,6 +21,7 @@ const NAV = [
   { to: '/notifications', label: 'Broadcasts', cap: 'broadcast_draft' },
   { to: '/admins', label: 'Admin Accounts', cap: 'manage_admins' },
   { to: '/settings', label: 'Feature Flags', cap: 'feature_flags' },
+  { to: '/api', label: 'API & AI Models', cap: 'feature_flags' },
   { to: '/update', label: 'App Update', cap: null },
   { to: '/poster', label: 'Poster', cap: null },
   { to: '/coverage', label: 'Service Coverage', cap: 'feature_flags' },

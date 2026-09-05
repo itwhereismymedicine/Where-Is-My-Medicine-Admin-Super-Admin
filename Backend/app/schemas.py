@@ -93,3 +93,10 @@ class FeatureFlagsBody(BaseModel):
     # App discount cut carved out of the pharmacy's agreed discount, e.g.
     # {"platformExtraPct": 2, "enabled": true}. Super-admin only (see config.py).
     appDiscount: dict = {}
+
+
+class AiConfigBody(BaseModel):
+    """AI model names the app reads at runtime (feature_flags/config.ai) so models
+    can be swapped from the Super-Admin API page without an app release."""
+    geminiModel: str = Field(default="gemini-2.5-flash", max_length=80)
+    geminiFallbackModel: str = Field(default="gemini-2.5-flash-lite", max_length=80)

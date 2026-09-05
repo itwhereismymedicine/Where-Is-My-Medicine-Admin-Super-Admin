@@ -1,0 +1,11 @@
+Add Super-Admin "API & AI Models" page + remote-configurable Gemini model
+
+- Backend: config doc now carries an `ai` map (geminiModel, geminiFallbackModel).
+  New PUT /api/config/ai merges just the AI models (won't clobber feature flags);
+  get_flags returns `ai` with sensible defaults; set_flags preserves `ai`.
+- Super-Admin: new "API & AI Models" page (searchable) to edit the model names,
+  saved via /api/config/ai, routed + added to the nav (super-admin only).
+- The Android app reads feature_flags/config.ai in realtime, so changing a model
+  here switches every app instantly with no rebuild (fixes deprecated-model errors).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
