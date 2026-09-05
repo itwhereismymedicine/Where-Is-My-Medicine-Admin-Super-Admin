@@ -98,5 +98,5 @@ class FeatureFlagsBody(BaseModel):
 class AiConfigBody(BaseModel):
     """AI model names the app reads at runtime (feature_flags/config.ai) so models
     can be swapped from the Super-Admin API page without an app release."""
-    geminiModel: str = Field(default="gemini-2.5-flash", max_length=80)
-    geminiFallbackModel: str = Field(default="gemini-2.5-flash-lite", max_length=80)
+    geminiModel: str = Field(default="gemini-3.5-flash", max_length=80)
+    geminiFallbackModel: str = Field(default="gemini-3.5-flash-lite", max_length=80)

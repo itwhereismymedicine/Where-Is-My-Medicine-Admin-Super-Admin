@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/config", tags=["config"])
 COL = "feature_flags"
 DOC = "config"
 
-DEFAULT_AI = {"geminiModel": "gemini-2.5-flash", "geminiFallbackModel": "gemini-2.5-flash-lite"}
+DEFAULT_AI = {"geminiModel": "gemini-3.5-flash", "geminiFallbackModel": "gemini-3.5-flash-lite"}
 
 
 @router.get("/flags")

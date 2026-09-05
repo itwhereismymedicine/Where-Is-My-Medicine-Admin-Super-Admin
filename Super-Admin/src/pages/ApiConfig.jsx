@@ -4,11 +4,11 @@ import { Loading, ErrorNote } from '../components/Helpers.jsx'
 
 // The AI model settings the app reads at runtime (feature_flags/config.ai).
 const ROWS = [
-  { key: 'geminiModel', label: 'Gemini — prescription / label / lab model', hint: 'e.g. gemini-2.5-flash' },
-  { key: 'geminiFallbackModel', label: 'Gemini — fallback model', hint: 'e.g. gemini-2.5-flash-lite' },
+  { key: 'geminiModel', label: 'Gemini — prescription / label / lab model', hint: 'e.g. gemini-3.5-flash' },
+  { key: 'geminiFallbackModel', label: 'Gemini — fallback model', hint: 'e.g. gemini-3.5-flash-lite' },
 ]
 
-const DEFAULTS = { geminiModel: 'gemini-2.5-flash', geminiFallbackModel: 'gemini-2.5-flash-lite' }
+const DEFAULTS = { geminiModel: 'gemini-3.5-flash', geminiFallbackModel: 'gemini-3.5-flash-lite' }
 
 export default function ApiConfig() {
   const [ai, setAi] = useState(null)
