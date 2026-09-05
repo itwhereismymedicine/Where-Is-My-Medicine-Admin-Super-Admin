@@ -9,6 +9,7 @@ import Approvals from './pages/Approvals.jsx'
 import Pharmacies from './pages/Pharmacies.jsx'
 import Orders from './pages/Orders.jsx'
 import Customers from './pages/Customers.jsx'
+import Complaints from './pages/Complaints.jsx'
 import Refunds from './pages/Refunds.jsx'
 import Salesmen from './pages/Salesmen.jsx'
 import Payouts from './pages/Payouts.jsx'
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="pharmacies" element={<Pharmacies />} />
         <Route path="orders" element={<Orders />} />
         <Route path="customers" element={<Customers />} />
+        <Route path="complaints" element={<Complaints />} />
         <Route path="refunds" element={<Refunds />} />
         <Route path="salesmen" element={<Salesmen />} />
         <Route path="payouts" element={<Payouts />} />

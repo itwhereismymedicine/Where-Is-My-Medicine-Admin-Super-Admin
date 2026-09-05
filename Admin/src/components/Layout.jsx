@@ -10,6 +10,7 @@ const NAV = [
   { to: '/pharmacies', label: 'Pharmacies', cap: 'view_pharmacies' },
   { to: '/orders', label: 'Orders & Delivery', cap: 'view_orders' },
   { to: '/customers', label: 'Customers', cap: 'view_customers' },
+  { to: '/complaints', label: 'Complaints', cap: 'view_complaints' },
   { section: 'Money' },
   { to: '/refunds', label: 'Refunds', cap: 'issue_refund' },
   { to: '/salesmen', label: 'Salesmen & Referrals', cap: 'view_salesmen' },

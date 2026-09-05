@@ -121,6 +121,26 @@ store: dict[str, dict[str, dict]] = {
             "createdAtMillis": _now - 2 * 3_600_000, "redeemedAtMillis": 0,
         },
     },
+    "complaints": {
+        "cmp_7001": {
+            "customerUid": "uid_cust_1", "customerPhone": "9911111111", "customerName": "Sourav Das",
+            "pharmacyUid": "uid_pharm_2", "pharmacyName": "CityCare Pharmacy",
+            "category": "Overcharged / wrong price",
+            "message": "Charged ₹40 for Dolo 650 instead of the ₹32 shown in the app.",
+            "status": "OPEN", "adminAction": "", "adminNote": "", "actionByRole": "",
+            "actionAtMillis": 0, "createdAtMillis": _now - 5 * 3_600_000,
+        },
+        "cmp_7002": {
+            "customerUid": "uid_cust_2", "customerPhone": "9922222222", "customerName": "Meera Iyer",
+            "pharmacyUid": "uid_pharm_2", "pharmacyName": "CityCare Pharmacy",
+            "category": "Refused the app discount",
+            "message": "",
+            "status": "RESOLVED", "adminAction": "Warning issued",
+            "adminNote": "Reminded the pharmacy that app discounts are mandatory.",
+            "actionByRole": "admin", "actionAtMillis": _now - 1 * _day,
+            "createdAtMillis": _now - 2 * _day,
+        },
+    },
     "chats": {
         # chat messages are nested in Firestore; for the mock we flatten one
         # thread keyed by orderId into a list under "messages".

@@ -33,6 +33,10 @@ class Cap(str, Enum):
     # Reservations (in-store reserve → pharmacy redeem)
     VIEW_RESERVATIONS = "view_reservations"
 
+    # Complaints (customer → pharmacy)
+    VIEW_COMPLAINTS = "view_complaints"
+    MANAGE_COMPLAINTS = "manage_complaints"
+
     # Customers
     VIEW_CUSTOMERS = "view_customers"
     BLOCK_CUSTOMER = "block_customer"
@@ -72,6 +76,8 @@ ADMIN_CAPS = {
     Cap.VIEW_ORDERS,
     Cap.RESOLVE_DISPUTES,
     Cap.VIEW_RESERVATIONS,
+    Cap.VIEW_COMPLAINTS,
+    Cap.MANAGE_COMPLAINTS,
     Cap.VIEW_CUSTOMERS,
     Cap.BLOCK_CUSTOMER,
     Cap.VIEW_SALESMEN,
