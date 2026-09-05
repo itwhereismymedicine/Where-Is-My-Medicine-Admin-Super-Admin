@@ -5,10 +5,12 @@ import { StatCard, fmtMoney, Loading, ErrorNote } from '../components/Helpers.js
 
 export default function Overview() {
   const [ov, setOv] = useState(null)
+  const [cmp, setCmp] = useState(null)
   const [err, setErr] = useState('')
 
   useEffect(() => {
     api.get('/api/analytics/overview').then(setOv).catch((e) => setErr(e.message))
+    api.get('/api/complaints/stats').then(setCmp).catch(() => {})  // non-fatal
   }, [])
 
   if (err) return <div className="page"><ErrorNote error={err} /></div>
@@ -30,12 +32,15 @@ export default function Overview() {
         <StatCard value={fmtMoney(ov.gmv)} label="Paid GMV" />
         <StatCard value={ov.totalReservations ?? 0} label="Reservations" />
         <StatCard value={ov.verifiedAppCustomers ?? 0} label="Verified app customers" />
+        <StatCard value={cmp?.open ?? 0} label="Open complaints" />
+        <StatCard value={cmp?.total ?? 0} label="Total complaints" />
       </div>
       <div className="panel">
         <h3>Quick actions</h3>
         <div className="row" style={{ marginTop: 10 }}>
           <Link to="/approvals"><button>Review signups ({ov.pendingApprovals})</button></Link>
           <Link to="/orders"><button>Open orders ({ov.openOrders})</button></Link>
+          <Link to="/complaints"><button>Complaints ({cmp?.open ?? 0})</button></Link>
           <Link to="/analytics"><button>Analytics</button></Link>
         </div>
       </div>
